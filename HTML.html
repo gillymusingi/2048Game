@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2048 Game Launcher</title>
+
+<style>
+    body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: radial-gradient(circle, #1a103f, #070712);
+        font-family: "Poppins", sans-serif;
+        color: white;
+    }
+
+    .play-btn {
+        padding: 20px 50px;
+        font-size: 30px;
+        font-weight: 700;
+        color: white;
+        background: linear-gradient(135deg, #6a00ff, #b100ff);
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        position: absolute;
+        transition: 0.25s;
+        box-shadow: 0 0 15px #b100ff88, 0 0 30px #6a00ff55;
+    }
+
+    .play-btn:hover {
+        transform: scale(1.09);
+        box-shadow: 0 0 20px #c000ff, 0 0 40px #8800ff;
+    }
+
+    #gameContainer {
+        display: none;
+        text-align: center;
+    }
+
+    #grid {
+        width: 340px;
+        height: 340px;
+        background: #bbada0;
+        border-radius: 10px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        padding: 10px;
+        margin-top: 20px;
+    }
+
+    .cell {
+        width: 75px;
+        height: 75px;
+        background: #cdc1b4;
+        border-radius: 5px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 28px;
+        font-weight: bold;
+        color: #776e65;
+    }
+
+    .n2 { background: #eee4da; }
+    .n4 { background: #ede0c8; }
+    .n8 { background: #f2b179; color: white; }
+    .n16 { background: #f59563; color: white; }
+    .n32 { background: #f67c5f; color: white; }
+    .n64 { background: #f65e3b; color: white; }
+    .n128 { background: #edcf72; color: white; font-size: 24px; }
+    .n256 { background: #edcc61; color: white; font-size: 24px; }
+    .n512 { background: #edc850; color: white; font-size: 24px; }
+    .n1024 { background: #edc53f; color: white; font-size: 22px; }
+    .n2048 { background: #edc22e; color: white; font-size: 22px; }
+
+    #score {
+        margin-top: 10px;
+        font-size: 22px;
+        font-weight: 600;
+    }
+
+    .restart-btn {
+        padding: 15px 35px;
+        font-size: 20px;
+        border: none;
+        border-radius: 15px;
+        background: linear-gradient(135deg, #ff0080, #ff4d4d);
+        color: white;
+        cursor: pointer;
+        margin-top: 10px;
+        transition: 0.25s;
+        box-shadow: 0 0 10px #ff4d4d88;
+    }
+
+    .restart-btn:hover {
+        transform: scale(1.1);
+    }
+
+    #gameOverBox {
+        margin-top: 20px;
+        display: none;
+    }
+
+    /* Mobile scaling */
+    @media (max-width: 400px) {
+        #grid {
+            width: 90vw;
+            height: 90vw;
+            gap: 5px;
+            padding: 5px;
+        }
+        .cell {
+            width: calc((90vw - 40px)/4);
+            height: calc((90vw - 40px)/4);
+            font-size: calc((90vw - 40px)/8);
+        }
+    }
+</style>
+</head>
+<body>
+
+<button class="play-btn" onclick="startGame()">CLICK TO PLAY</button>
+
+<div id="gameContainer">
+    <h1>2048</h1>
+    <div id="score">Score: 0</div>
+    <div id="grid"></div>
+
+    <div id="gameOverBox">
+        <h2>GAME OVER</h2>
+    </div>
+
+    <button class="restart-btn" onclick="restartGame()">NEW GAME</button>
+</div>
+
+<script>
+    let board;
+    let score = 0;
+
+    function startGame() {
+        document.querySelector(".play-btn").style.display = "none";
+        document.getElementById("gameContainer").style.display = "block";
+        restartGame();
+    }
+
+    function restartGame() {
+        board = [
+            [0,0,0,0],
+            [0,0,0,0],
+            [0,0,0,0],
+            [0,0,0,0]
+        ];
+        score = 0;
+        document.getElementById("score").textContent = "Score: 0";
+        addNumber();
+        addNumber();
+        drawBoard();
+        document.getElementById("gameOverBox").style.display = "none";
+    }
+
+    function addNumber() {
+        let empty = [];
+        for (let r=0; r<4; r++) {
+            for (let c=0; c<4; c++) {
+                if (board[r][c] === 0) empty.push({r,c});
+            }
+        }
+        if (empty.length === 0) return;
+        let spot = empty[Math.floor(Math.random() * empty.length)];
+        board[spot.r][spot.c] = Math.random() < 0.9 ? 2 : 4;
+    }
+
+    function drawBoard() {
+        const grid = document.getElementById("grid");
+        grid.innerHTML = "";
+        for (let r=0; r<4; r++) {
+            for (let c=0; c<4; c++) {
+                let cell = document.createElement("div");
+                cell.classList.add("cell");
+                let value = board[r][c];
+                if (value !== 0) {
+                    cell.textContent = value;
+                    cell.classList.add("n" + value);
+                }
+                grid.appendChild(cell);
+            }
+        }
+        document.getElementById("score").textContent = "Score: " + score;
+    }
+
+    function slide(row) {
+        row = row.filter(n => n !== 0);
+        for (let i = 0; i < row.length - 1; i++) {
+            if (row[i] === row[i+1]) {
+                row[i] *= 2;
+                score += row[i];
+                row[i+1] = 0;
+            }
+        }
+        row = row.filter(n => n !== 0);
+        while (row.length < 4) row.push(0);
+        return row;
+    }
+
+    function moveLeft() {
+        let moved = false;
+        for (let r=0; r<4; r++) {
+            let old = board[r].slice();
+            board[r] = slide(board[r]);
+            if (old.toString() !== board[r].toString()) moved = true;
+        }
+        return moved;
+    }
+
+    function moveRight() {
+        let moved = false;
+        for (let r=0; r<4; r++) {
+            let old = board[r].slice();
+            board[r] = slide(board[r].slice().reverse()).reverse();
+            if (old.toString() !== board[r].toString()) moved = true;
+        }
+        return moved;
+    }
+
+    function moveUp() {
+        let moved = false;
+        for (let c=0; c<4; c++) {
+            let column = [board[0][c], board[1][c], board[2][c], board[3][c]];
+            let old = column.slice();
+            column = slide(column);
+            for (let r=0; r<4; r++) board[r][c] = column[r];
+            if (old.toString() !== column.toString()) moved = true;
+        }
+        return moved;
+    }
+
+    function moveDown() {
+        let moved = false;
+        for (let c=0; c<4; c++) {
+            let column = [board[0][c], board[1][c], board[2][c], board[3][c]];
+            let old = column.slice();
+            column = slide(column.reverse()).reverse();
+            for (let r=0; r<4; r++) board[r][c] = column[r];
+            if (old.toString() !== column.toString()) moved = true;
+        }
+        return moved;
+    }
+
+    function isGameOver() {
+        for (let r=0; r<4; r++) {
+            for (let c=0; c<4; c++) {
+                if (board[r][c] === 0) return false;
+                if (c < 3 && board[r][c] === board[r][c+1]) return false;
+                if (r < 3 && board[r][c] === board[r+1][c]) return false;
+            }
+        }
+        return true;
+    }
+
+    document.addEventListener("keydown", (e) => {
+        let moved = false;
+        if (e.key === "ArrowLeft") moved = moveLeft();
+        if (e.key === "ArrowRight") moved = moveRight();
+        if (e.key === "ArrowUp") moved = moveUp();
+        if (e.key === "ArrowDown") moved = moveDown();
+
+        if (moved) {
+            addNumber();
+            drawBoard();
+            if (isGameOver()) document.getElementById("gameOverBox").style.display = "block";
+        }
+    });
+
+    // Swipe detection for mobile
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    document.addEventListener("touchstart", e => {
+        const touch = e.touches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+    });
+
+    document.addEventListener("touchend", e => {
+        const touch = e.changedTouches[0];
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = touch.clientY - touchStartY;
+        const absX = Math.abs(deltaX);
+        const absY = Math.abs(deltaY);
+
+        if (Math.max(absX, absY) > 20) { // minimum swipe distance
+            let moved = false;
+            if (absX > absY) {
+                if (deltaX > 0) moved = moveRight();
+                else moved = moveLeft();
+            } else {
+                if (deltaY > 0) moved = moveDown();
+                else moved = moveUp();
+            }
+            if (moved) {
+                addNumber();
+                drawBoard();
+                if (isGameOver()) document.getElementById("gameOverBox").style.display = "block";
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
